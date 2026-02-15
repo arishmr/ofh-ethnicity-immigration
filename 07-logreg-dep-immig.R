@@ -1,5 +1,5 @@
 ## GOAL: within people who immigrated in each ethnicity subgroup, calculate Odds Ratios for depression (lifetime/current) comparing:
-# immigrated >10 years ago compared to <10 years ago
+# immigrated >5 years ago compared to <5 years ago
 # immigrated as <18 years old compared to immigrated in adulthood
 
 library(dplyr)
