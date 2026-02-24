@@ -1,4 +1,4 @@
-## GOAL: Process the raw dataset to (1) rename and reclass variables, (2) derive new variables, and (3) produce single cleaned dataframe with all relevant variables
+### GOAL: Process the raw dataset to (1) rename and reclass variables, (2) derive new variables, and (3) produce single cleaned dataframe with all relevant variables
 
 rm(list = ls())
 library(dplyr)
