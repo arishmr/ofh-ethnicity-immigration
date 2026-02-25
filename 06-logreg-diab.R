@@ -75,7 +75,7 @@ logreg_ethnicity <- function (data, subset, outVar) {
   output <- bind_rows(output, estimates)
   
   # Fully adjusted model
-  fit1 <- glm(as.formula(paste(outVar, "~ ethnicity + age + sex + bmi + income + alcohol + smoking + social + insomnia + fatherpsych + motherpsych")),
+  fit1 <- glm(as.formula(paste(outVar, "~ ethnicity + age + sex + bmi + income + alcohol + smoking + social + fatherpsych + motherpsych")),
               family = binomial(link="logit"),
               data = df)
   ## extract relevant estimates from the model
@@ -182,7 +182,7 @@ logreg_immigration <- function (data, subset, outVar) {
   output <- bind_rows(output, estimates)
   
   # Fully adjusted model
-  fit1 <- glm(as.formula(paste(outVar, "~ immigration + age + sex + bmi + income + alcohol + smoking + social + insomnia + fatherpsych + motherpsych")),
+  fit1 <- glm(as.formula(paste(outVar, "~ immigration + age + sex + bmi + income + alcohol + smoking + social + fatherpsych + motherpsych")),
               family = binomial(link="logit"),
               data = df)
   ## extract relevant estimates from the model
