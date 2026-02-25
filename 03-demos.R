@@ -13,12 +13,9 @@ contdemos <- demodata %>%
   tidyr::drop_na(value)
 
 ## Split dataset by demographic variables
-group_names <- contdemos %>% group_keys(variable) %>% pull(1)
 splitdata <- contdemos %>%
   group_by(variable) %>%
-  group_split() %>%
-  rlang::set_names(group_names)
-rm(group_names)
+  group_split()
 
 ## Create a blank dataframe in which the outputs will be populated
 
@@ -81,7 +78,7 @@ output <- lapply(splitdata, function (x) {
 })
 output <- purrr::reduce(output, full_join)
 
-splitdata$immigrate_duration <- NULL
+splitdata[[4]] <- NULL # delete element of list that involves immigrate_duration
 
 ## Now apply the anova function over each element of the splitdata
 anova <- lapply(splitdata, function (x) {
@@ -118,16 +115,13 @@ rm(contdemos, output, splitdata, anova)
 catdemos <- demodata %>%
   tidyr::gather(key = "variable",
                 value = "value",
-                sex, income, alcohol, smoking, insomnia, fatherpsych, motherpsych, immigrate_stage) %>%
+                sex, income, alcohol, smoking, fatherpsych, motherpsych, immigrate_stage) %>%
   tidyr::drop_na(value)
 
 ## Split dataset by demographic variables
-group_names <- catdemos %>% group_keys(variable) %>% pull(1)
 splitdata <- catdemos %>%
   group_by(variable) %>%
-  group_split() %>%
-  rlang::set_names(group_names)
-rm(group_names)
+  group_split()
 
 ## ensure that values are classed as factors
 splitdata <- lapply(splitdata, function (x) {
@@ -183,7 +177,7 @@ output <- lapply(splitdata, function (x) {
 })
 output <- purrr::reduce(output, full_join)
 
-splitdata$immigrate_stage <- NULL
+splitdata[[3]] <- NULL # delete element of list that involves immigrate_stage
 
 ## Now apply the chisq function over each element of the splitdata
 chisq <- lapply(splitdata, function (x) {
