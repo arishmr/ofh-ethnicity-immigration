@@ -36,9 +36,9 @@ alldata <- alldata %>% rename(
   "education" = "edu_qual_1_m",
   "income" = "housing_income_1_1",
   "orig_alcohol" = "alcohol_curr_1_1",
-  "orig_smoking" = "smoke_status_2_1",
+  "orig_smoking" = "smoke_tobacco_type_1_m",
   "orig_social" = "lifestyle_social_visits_1_1",
-  "orig_insomnia" = "sleep_trouble_1_1",
+  #"orig_insomnia" = "sleep_trouble_1_1",
   "orig_fatherpsych" = "father_diag_a_2_m",
   "orig_motherpsych" = "mother_diag_a_2_m"
 )
@@ -133,14 +133,18 @@ alldata <- alldata %>% dplyr::filter(!is.na(sex))
 
 
 ## Calculate BMI using height and weight
-alldata$height <- alldata$height/100
+## but first, replace extreme values with NA (use OFH thresholds)
+alldata <- alldata %>% mutate(height = case_when(height > 299 ~ NA, height < 90 ~ NA, TRUE ~ height)) %>% mutate(height = height/100)
+alldata <- alldata %>% mutate(weight = case_when(weight > 400 ~ NA, weight < 20 ~ NA, TRUE ~ weight))
 alldata <- alldata %>% mutate(bmi = (weight / height^2))
-# have to figure out how to deal with extremely improbably values in height and weight
 
 
-# Recode missing income values to NA
+# Recode missing income to NA
 alldata$income[alldata$income == "Do not know"] <- NA
 alldata$income[alldata$income == "Prefer not to answer"] <- NA
+alldata$orig_alcohol[alldata$orig_alcohol == ""] <- NA
+alldata$orig_smoking[alldata$orig_smoking == ""] <- NA
+alldata$orig_social[alldata$orig_social == ""] <- NA
 #alldata <- alldata %>% mutate(income = case_when(
 #  income == "Less than £18,000" ~ "1",
 #  income == "£18,000 to £30,999" ~ "2",
@@ -150,46 +154,53 @@ alldata$income[alldata$income == "Prefer not to answer"] <- NA
 #  TRUE ~ NA
 #))
 
-## Recode the following categorical variables: alcohol, smoking, social (degrees, not binary), and insomnia
+## Recode the following categorical variables: alcohol, smoking (logical), social (degrees, not binary), and insomnia
 alldata <- alldata %>% mutate(alcohol = case_when(
+  is.na(orig_alcohol) ~ NA,
   orig_alcohol == "Never" | orig_alcohol == "Special occasions only" ~ "Rarely or Never",
   orig_alcohol == "Prefer not to answer" ~ NA,
-  TRUE ~ "Frequently"
+  TRUE ~ "Regularly"
 ))
 alldata <- alldata %>% mutate(smoking = case_when(
-  orig_smoking == "No, not at all" | orig_smoking == "Yes, but rarely" ~ "Rarely or Never",
+  is.na(orig_smoking) ~ NA,
+  orig_smoking == "I have not used any of these tobacco products" ~ FALSE,
   orig_smoking == "Prefer not to answer" ~ NA,
-  TRUE ~ "Frequently"
+  TRUE ~ TRUE
 ))
 alldata <- alldata %>% mutate(social = case_when(
+  is.na(orig_social) ~ NA,
   orig_social == "No friends/family outside household" | orig_social == "Never or almost never" ~ "0",
   orig_social == "Once every few month" ~ "1",
   orig_social == "About once a month" ~ "2",
   orig_social == "About once a week" ~ "3",
   orig_social == "2-4 times a week" ~ "4",
   orig_social == "Almost daily" ~ "5",
-  TRUE ~ "Frequently"
+  TRUE ~ NA
 ))
-alldata <- alldata %>% mutate(insomnia = case_when(
-  orig_insomnia == "Never/rarely" | orig_insomnia == "Sometimes" ~ "Rarely or Never",
-  orig_insomnia == "Prefer not to answer" ~ NA,
-  TRUE ~ "Frequently"
-))
+#alldata <- alldata %>% mutate(insomnia = case_when(
+#  is.na(orig_insomnia) ~ NA,
+#  orig_insomnia == "Never/rarely" | orig_insomnia == "Sometimes" ~ "Rarely or Never",
+#  orig_insomnia == "Prefer not to answer" ~ NA,
+#  TRUE ~ "Regularly"
+#))
 
 ## Create new columns for family psychiatric history
 ## TRUE if mother/father diag_psych contains "Depression"
+alldata$orig_motherpsych[alldata$orig_motherpsych == "Do not know"] <- NA
+alldata$orig_motherpsych[alldata$orig_motherpsych == "Prefer not to answer"] <- NA
+alldata$orig_fatherpsych[alldata$orig_fatherpsych == "Do not know"] <- NA
+alldata$orig_fatherpsych[alldata$orig_fatherpsych == "Prefer not to answer"] <- NA
 alldata$motherpsych <- ifelse(grepl("Depression", alldata$orig_motherpsych, ignore.case = T), TRUE, FALSE)
 alldata$fatherpsych <- ifelse(grepl("Depression", alldata$orig_fatherpsych, ignore.case = T), TRUE, FALSE)
 
 
 
-## Convert the following variables to factors: pid, ethnicity, immigration, sex, edu, income, alc, cig, insomnia
-factorcols <- c("pid", "ethnicity", "immigration", "immigrate_stage", "sex", "education", "income", "alcohol", "smoking", "insomnia")
+## Convert the following variables to factors: pid, ethnicity, immigration, sex, edu, income, alc, insomnia
+factorcols <- c("pid", "ethnicity", "immigration", "immigrate_stage", "sex", "education", "income", "alcohol")
 alldata[factorcols] <- lapply(alldata[factorcols], as.factor)
 alldata$sex <- relevel(alldata$sex, ref = "Male")
 alldata$income <- relevel(alldata$income, ref = "Less than £18,000")
 alldata$alcohol <- relevel(alldata$alcohol, "Rarely or Never")
-alldata$smoking <- relevel(alldata$smoking, "Rarely or Never")
 alldata$immigration <- relevel(alldata$immigration, "Non-Immigrant")
 alldata$ethnicity <- relevel(alldata$ethnicity, ref = "White")
 rm(factorcols)
@@ -205,13 +216,13 @@ alldata <- alldata %>% dplyr::filter(immigrate_duration >= 0 | is.na(immigrate_d
 
 ## Finally, delete unnecessary columns and reorder columns as needed to generate cleaned dataset
 alldata <- alldata %>% dplyr::select(-c(
-  "orig_ethnicity", "orig_sex1", "orig_sex2", "diag_psych", "diag_endoc", "birthplace", "education", "orig_alcohol", "orig_smoking", "orig_social", "orig_insomnia", "orig_fatherpsych", "orig_motherpsych", "consent_year", "birth_year"
+  "orig_ethnicity", "orig_sex1", "orig_sex2", "diag_psych", "diag_endoc", "birthplace", "education", "orig_alcohol", "orig_smoking", "orig_social", "orig_fatherpsych", "orig_motherpsych", "consent_year", "birth_year", "sleep_trouble_1_1"
 ))
 alldata <- alldata %>% relocate(
   pid, #participant ID
   depression, currdep, PHQ, diabetes, #outcomes
   ethnicity, immigration, immigrate_year, immigrate_duration, immigrate_age, immigrate_stage, #predictors
-  age, sex, height, weight, bmi, income, alcohol, smoking, social, insomnia, fatherpsych, motherpsych, #covariates
+  age, sex, height, weight, bmi, income, alcohol, smoking, social, fatherpsych, motherpsych, #covariates
   phq1, phq2, phq3, phq4, phq5, phq6, phq7, phq8, phq9, #phq-9 items
 )
 
