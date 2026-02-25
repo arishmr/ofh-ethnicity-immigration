@@ -1,5 +1,5 @@
 ## GOAL: within people who immigrated in each ethnicity subgroup, calculate Odds Ratios for depression (lifetime/current) comparing:
-# immigrated >5 years ago compared to <5 years ago
+# immigrated >10 years ago compared to <10 years ago
 # immigrated as <18 years old compared to immigrated in adulthood
 
 library(dplyr)
@@ -94,7 +94,7 @@ logreg_immigration <- function (data, subset, outVar, predVar, compGroup) {
   output <- bind_rows(output, estimates)
   
   # Fully adjusted model
-  fit1 <- glm(as.formula(paste(outVar, "~ ", predVar, " + age + sex + immigrate_age + bmi + income + alcohol + smoking + social + insomnia + fatherpsych + motherpsych")),
+  fit1 <- glm(as.formula(paste(outVar, "~ ", predVar, " + age + sex + immigrate_age + bmi + income + alcohol + smoking + social + fatherpsych + motherpsych")),
               family = binomial(link="logit"),
               data = df)
   ## extract relevant estimates from the model
@@ -225,7 +225,7 @@ logreg_immigration <- function (data, subset, outVar, predVar, compGroup) {
   output <- bind_rows(output, estimates)
   
   # Fully adjusted model
-  fit1 <- glm(as.formula(paste(outVar, "~ ", predVar, " + age + sex + immigrate_duration + bmi + income + alcohol + smoking + social + insomnia + fatherpsych + motherpsych")),
+  fit1 <- glm(as.formula(paste(outVar, "~ ", predVar, " + age + sex + immigrate_duration + bmi + income + alcohol + smoking + social + fatherpsych + motherpsych")),
               family = binomial(link="logit"),
               data = df)
   ## extract relevant estimates from the model
