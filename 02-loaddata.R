@@ -8,12 +8,11 @@ library(tidyr)
 alldata <- read.csv("data/cleandata.csv")
 
 ## Convert the following variables to factors: pid, ethnicity, immigration, sex, edu, income, alc, cig, insomnia
-factorcols <- c("pid", "ethnicity", "immigration", "immigrate_stage", "sex", "income", "alcohol", "smoking", "insomnia", "depression", "currdep", "diabetes", "fatherpsych", "motherpsych")
+factorcols <- c("pid", "ethnicity", "immigration", "immigrate_stage", "sex", "income", "alcohol", "depression", "currdep", "diabetes", "fatherpsych", "motherpsych")
 alldata[factorcols] <- lapply(alldata[factorcols], as.factor)
 alldata$sex <- relevel(alldata$sex, ref = "Male")
 alldata$income <- relevel(alldata$income, ref = "Less than £18,000")
 alldata$alcohol <- relevel(alldata$alcohol, "Rarely or Never")
-alldata$smoking <- relevel(alldata$smoking, "Rarely or Never")
 alldata$immigration <- relevel(alldata$immigration, "Non-Immigrant")
 alldata$immigrate_stage <- relevel(alldata$immigrate_stage, "Adult")
 alldata$ethnicity <- relevel(alldata$ethnicity, ref = "White")
@@ -25,8 +24,8 @@ alldata <- alldata %>% mutate(across(numcols, ~ as.numeric(.)))
 rm(numcols)
 
 
+######### IF USING COMPLETE CASE ANALYSIS
+#alldata <- alldata %>% tidyr::drop_na(bmi, income, alcohol, smoking, social, fatherpsych, motherpsych)
+
 #summary(alldata)
 
-
-######### IF USING COMPLETE CASE ANALYSIS
-#alldata <- alldata %>% tidyr::drop_na(bmi, income, alcohol, smoking, social, insomnia, fatherpsych, motherpsych)
