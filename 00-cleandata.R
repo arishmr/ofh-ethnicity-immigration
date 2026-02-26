@@ -65,12 +65,6 @@ alldata <- alldata %>% mutate(diabetes = case_when(
   TRUE ~ FALSE
 ))
 
-## Create new logical variable for lifetime depression diagnosis
-#alldata$depression <- grepl("Depression", alldata$diag_psych, ignore.case = T)
-
-## Create new logical variable for lifetime type 2 diabetes diagnosis
-#alldata$diabetes <- grepl("Type 2 diabetes", alldata$diag_endoc, ignore.case = T)
-
 ## Recode PHQ-9 variables to numeric
 alldata <- alldata %>% mutate(across(.cols = starts_with("phq"), 
                                      .fns = ~case_when(
@@ -82,10 +76,24 @@ alldata <- alldata %>% mutate(across(.cols = starts_with("phq"),
 numcols <- c("phq1", "phq2", "phq3", "phq4", "phq5", "phq6", "phq7", "phq8", "phq9")
 alldata[numcols] <- lapply(alldata[numcols], as.numeric)
 rm(numcols)
+
 ## Create new variable for total PHQ-9 score
 alldata$PHQ <- rowSums(alldata[,c("phq1", "phq2", "phq3", "phq4", "phq5", "phq6", "phq7", "phq8", "phq9")])
-## Create new binary variable for current depressive symptoms (PHQ > 9)
+
+## Create new binary variable for probable current depression (PHQ > 9)
 alldata$currdep <- ifelse(alldata$PHQ > 9, TRUE, FALSE)
+
+## Create new binary variable for possible undiagnosed depression
+alldata <- alldata %>% mutate(undiagdep = case_when(
+  is.na(depression) | is.na(currdep) ~ NA,
+  depression == FALSE & currdep == TRUE ~ TRUE,
+  TRUE ~ FALSE
+))
+
+## DROP PARTICIPANTS IF THEY HAVE DEPRESSION OR DIABETES MISSING
+alldata <- alldata %>% dplyr::filter(!is.na(depression))
+alldata <- alldata %>% dplyr::filter(!is.na(diabetes))
+
 
 
 ###########################################################
@@ -105,6 +113,7 @@ alldata <- alldata %>% mutate(ethnicity = case_when(
 
 ## Recode birthplace to appropriate categories to create immigration status variable
 alldata <- alldata %>% mutate(immigration = case_when(
+  is.na(birthplace) ~ NA,
   birthplace == "England" |  birthplace == "Scotland" | birthplace == "Wales" | birthplace == "Northern Ireland" | birthplace == "UK (don't know country)" ~ "Non-Immigrant",
   birthplace == "Do not know" | birthplace == "Prefer not to answer" ~ NA,
   TRUE ~ "Immigrant"
@@ -180,15 +189,9 @@ alldata <- alldata %>% mutate(social = case_when(
   orig_social == "About once a month" ~ "2",
   orig_social == "About once a week" ~ "3",
   orig_social == "2-4 times a week" ~ "4",
-  orig_social == "Almost daily" ~ "5",
-  TRUE ~ NA
+  orig_social == "Almost daily" ~ "5"
 ))
-#alldata <- alldata %>% mutate(insomnia = case_when(
-#  is.na(orig_insomnia) ~ NA,
-#  orig_insomnia == "Never/rarely" | orig_insomnia == "Sometimes" ~ "Rarely or Never",
-#  orig_insomnia == "Prefer not to answer" ~ NA,
-#  TRUE ~ "Regularly"
-#))
+
 
 ## Create new columns for family psychiatric history
 ## TRUE if mother/father diag_psych contains "Depression"
@@ -226,7 +229,7 @@ alldata <- alldata %>% dplyr::select(-c(
 ))
 alldata <- alldata %>% relocate(
   pid, #participant ID
-  depression, currdep, PHQ, diabetes, #outcomes
+  depression, currdep, undiagdep, PHQ, diabetes, #outcomes
   ethnicity, immigration, immigrate_year, immigrate_duration, immigrate_age, immigrate_stage, #predictors
   age, sex, height, weight, bmi, income, alcohol, smoking, social, fatherpsych, motherpsych, #covariates
   phq1, phq2, phq3, phq4, phq5, phq6, phq7, phq8, phq9, #phq-9 items
