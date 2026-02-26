@@ -7,17 +7,7 @@ library(tidyr)
 
 data <- alldata %>% dplyr::filter(immigration == "Immigrant")
 
-data <- alldata
-data <- data %>% mutate(undiagdep = case_when(
-  depression == FALSE & currdep == TRUE ~ TRUE,
-  TRUE ~ FALSE
-)) %>%
-  relocate(undiagdep, .after = currdep)
-
-data <- data %>% mutate(immigrate_duration = case_when(
-  immigrate_duration >= 5 ~ "5 years or more",
-  TRUE ~ "Less than 5 years"
-))
+data$immigrate_duration <- ifelse(data$immigrate_duration >= 5, "5 years or more", "Less than 5 years")
 data$immigrate_duration <- as.factor(data$immigrate_duration)
 data$immigrate_duration <- relevel(data$immigrate_duration, ref = "5 years or more")
 
