@@ -5,13 +5,6 @@ library(tidyr)
 
 data <- alldata
 
-data <- alldata
-data <- data %>% mutate(undiagdep = case_when(
-  depression == FALSE & currdep == TRUE ~ TRUE,
-  TRUE ~ FALSE
-)) %>%
-  relocate(undiagdep, .after = currdep)
-
 
 ##############################
 ## COMPARING ETHNICITY GROUPS
