@@ -14,12 +14,17 @@ clinic <- clinic %>% dplyr::select(-id)
 #now merge datasets
 alldata <- merge(participants, questionnaire, by = "pid", all.x = TRUE)
 alldata <- merge(alldata, clinic, by = "pid", all.x = TRUE)
+alldata[alldata == ""] <- NA
+
+## remove participants who did not answer the diag_2_m question (i.e. those who did not complete v2 of the questionnaire)
+alldata <- alldata %>% dplyr::filter(!is.na(diag_2_m))
+## now remove unnecessary columns
+alldata <- alldata %>% dplyr::select(-c("diag_2_m", "sleep_trouble_1_1", "demog_sex_1_1"))
 
 ## Rename columns to more interpretable variable names
 alldata <- alldata %>% rename(
   "orig_ethnicity" = "demog_ethnicity_1_1",
-  "orig_sex2" = "demog_sex_2_1",
-  "orig_sex1" = "demog_sex_1_1",
+  "sex" = "demog_sex_2_1",
   "diag_psych" = "diag_psych_1_m",
   "phq1" = "phq9_item1_interest_1_1",
   "phq2" = "phq9_item2_down_1_1",
@@ -38,7 +43,6 @@ alldata <- alldata %>% rename(
   "orig_alcohol" = "alcohol_curr_1_1",
   "orig_smoking" = "smoke_tobacco_type_1_m",
   "orig_social" = "lifestyle_social_visits_1_1",
-  #"orig_insomnia" = "sleep_trouble_1_1",
   "orig_fatherpsych" = "father_diag_a_2_m",
   "orig_motherpsych" = "mother_diag_a_2_m"
 )
@@ -47,11 +51,25 @@ alldata <- alldata %>% rename(
 ########### CLEAN, RECODE, AND/OR DERIVE OUTCOME VARIABLES: depression diagnosis, diabetes diagnosis, and PHQ-9 score
 ###########################################################
 
+alldata <- alldata %>% mutate(depression = case_when(
+  diag_psych == "Do not know" ~ NA,
+  diag_psych == "Prefer not to answer" ~ NA,
+  grepl("Depression", diag_psych, ignore.case = T) ~ TRUE,
+  TRUE ~ FALSE
+))
+
+alldata <- alldata %>% mutate(diabetes = case_when(
+  diag_endoc == "Do not know" ~ NA,
+  diag_endoc == "Prefer not to answer" ~ NA,
+  grepl("Type 2 diabetes", diag_endoc, ignore.case = T) ~ TRUE,
+  TRUE ~ FALSE
+))
+
 ## Create new logical variable for lifetime depression diagnosis
-alldata$depression <- grepl("Depression", alldata$diag_psych, ignore.case = T)
+#alldata$depression <- grepl("Depression", alldata$diag_psych, ignore.case = T)
 
 ## Create new logical variable for lifetime type 2 diabetes diagnosis
-alldata$diabetes <- grepl("Type 2 diabetes", alldata$diag_endoc, ignore.case = T)
+#alldata$diabetes <- grepl("Type 2 diabetes", alldata$diag_endoc, ignore.case = T)
 
 ## Recode PHQ-9 variables to numeric
 alldata <- alldata %>% mutate(across(.cols = starts_with("phq"), 
@@ -109,9 +127,7 @@ alldata <- alldata %>% dplyr::filter(!is.na(immigration))
 ###########################################################
 
 ## Combine sex data from two variables (pilot vs full cohort) into a single sex column
-alldata$orig_sex2[alldata$orig_sex2 == ""] <- NA
-alldata$orig_sex1[alldata$orig_sex1 == ""] <- NA
-alldata$sex <- coalesce(alldata$orig_sex2, alldata$orig_sex1)
+#alldata$sex <- coalesce(alldata$orig_sex2, alldata$orig_sex1)
 # recode sexes other than male or female to NA so these cases (~1200 people) can be omitted
 alldata$sex[alldata$sex == "Intersex"] <- NA
 alldata$sex[alldata$sex == "Prefer not to answer"] <- NA
@@ -142,17 +158,7 @@ alldata <- alldata %>% mutate(bmi = (weight / height^2))
 # Recode missing income to NA
 alldata$income[alldata$income == "Do not know"] <- NA
 alldata$income[alldata$income == "Prefer not to answer"] <- NA
-alldata$orig_alcohol[alldata$orig_alcohol == ""] <- NA
-alldata$orig_smoking[alldata$orig_smoking == ""] <- NA
-alldata$orig_social[alldata$orig_social == ""] <- NA
-#alldata <- alldata %>% mutate(income = case_when(
-#  income == "Less than £18,000" ~ "1",
-#  income == "£18,000 to £30,999" ~ "2",
-#  income == "£31,000 to £51,999" ~ "3",
-#  income == "£52,000 to £100,000" ~ "4",
-#  income == "Greater than £100,000" ~ "5",
-#  TRUE ~ NA
-#))
+
 
 ## Recode the following categorical variables: alcohol, smoking (logical), social (degrees, not binary), and insomnia
 alldata <- alldata %>% mutate(alcohol = case_when(
@@ -216,7 +222,7 @@ alldata <- alldata %>% dplyr::filter(immigrate_duration >= 0 | is.na(immigrate_d
 
 ## Finally, delete unnecessary columns and reorder columns as needed to generate cleaned dataset
 alldata <- alldata %>% dplyr::select(-c(
-  "orig_ethnicity", "orig_sex1", "orig_sex2", "diag_psych", "diag_endoc", "birthplace", "education", "orig_alcohol", "orig_smoking", "orig_social", "orig_fatherpsych", "orig_motherpsych", "consent_year", "birth_year", "sleep_trouble_1_1"
+  "orig_ethnicity", "diag_psych", "diag_endoc", "birthplace", "education", "orig_alcohol", "orig_smoking", "orig_social", "orig_fatherpsych", "orig_motherpsych", "consent_year", "birth_year"
 ))
 alldata <- alldata %>% relocate(
   pid, #participant ID
