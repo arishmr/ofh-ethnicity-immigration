@@ -23,11 +23,6 @@ output <- data.frame(
 ####################
 
 data <- alldata
-data <- data %>% mutate(undiagdep = case_when(
-  depression == FALSE & currdep == TRUE ~ TRUE,
-  TRUE ~ FALSE
-)) %>%
-  relocate(undiagdep, .after = currdep)
 
 ## convert outcomes to long form
 data <- data %>% tidyr::gather(key = "outcome", value = "value", depression, currdep, undiagdep, diabetes)
@@ -62,12 +57,6 @@ output <- purrr::reduce(output, full_join) %>% arrange(outcome)
 ####################
 
 data <- alldata
-data <- alldata
-data <- data %>% mutate(undiagdep = case_when(
-  depression == FALSE & currdep == TRUE ~ TRUE,
-  TRUE ~ FALSE
-)) %>%
-  relocate(undiagdep, .after = currdep)
 
 ## convert outcomes to long form
 data <- data %>% tidyr::gather(key = "outcome", value = "value", depression, currdep, undiagdep, diabetes)
@@ -101,12 +90,6 @@ output <- purrr::reduce(output, full_join) %>% arrange(outcome)
 ####################
 
 data <- alldata
-data <- alldata
-data <- data %>% mutate(undiagdep = case_when(
-  depression == FALSE & currdep == TRUE ~ TRUE,
-  TRUE ~ FALSE
-)) %>%
-  relocate(undiagdep, .after = currdep)
 
 ## convert outcomes to long form
 data <- data %>% tidyr::gather(key = "outcome", value = "value", depression, currdep, undiagdep, diabetes)
